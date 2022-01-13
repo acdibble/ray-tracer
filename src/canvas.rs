@@ -1,51 +1,67 @@
-use crate::convert::u8_to_str;
-use crate::tuples::*;
+use crate::{convert::u8_to_str, tuples::*};
+use std::io::{self, Write};
 
 type Pixel = (f64, f64, f64);
 
-struct PPM {
-  data: String,
+struct PPM<T: Write> {
+  buffer: T,
   current_line_len: usize,
 }
 
-impl PPM {
-  fn new(width: usize, height: usize) -> Self {
-    let mut data = String::with_capacity((width + 1) * height * 3);
-    data.push_str("P3\n");
-    data.push_str(&width.to_string());
-    data.push(' ');
-    data.push_str(&height.to_string());
-    data.push('\n');
-    data.push_str("255");
-
-    Self {
-      data,
+impl<T: Write> PPM<T> {
+  fn new(width: usize, height: usize, buffer: T) -> Self {
+    let mut out = Self {
+      buffer,
       current_line_len: 0,
-    }
+    };
+
+    out.write_header(width, height).unwrap();
+
+    out
   }
 
-  fn write(&mut self, value: &str) {
+  fn write_header(&mut self, width: usize, height: usize) -> Result<(), io::Error> {
+    self.buffer.write(b"P3\n")?;
+    self.buffer.write(width.to_string().as_bytes())?;
+    self.buffer.write(b" ")?;
+    self.buffer.write(height.to_string().as_bytes())?;
+    self.buffer.write(b"\n")?;
+    self.buffer.write(b"255")?;
+    Ok(())
+  }
+
+  fn end(mut self) -> Result<(), io::Error> {
+    if self.current_line_len != 0 {
+      self.new_line()?;
+    }
+
+    Ok(())
+  }
+
+  fn new_line(&mut self) -> Result<(), io::Error> {
+    self.buffer.write(b"\n")?;
+    self.current_line_len = 0;
+    Ok(())
+  }
+}
+
+impl<T: Write> Write for PPM<T> {
+  fn write(&mut self, value: &[u8]) -> Result<usize, io::Error> {
     if self.current_line_len + value.len() + 2 > 70 {
-      self.new_line();
+      self.new_line()?;
     } else if self.current_line_len != 0 {
-      self.data.push(' ');
+      self.buffer.write(b" ")?;
       self.current_line_len += 1;
     }
 
-    self.data.push_str(value);
+    self.buffer.write(value)?;
     self.current_line_len += value.len();
+    Ok(value.len())
   }
 
-  fn to_string(mut self) -> String {
-    if !self.data.ends_with('\n') {
-      self.data.push('\n');
-    }
-    self.data
-  }
-
-  fn new_line(&mut self) {
-    self.data.push('\n');
-    self.current_line_len = 0;
+  fn flush(&mut self) -> Result<(), io::Error> {
+    self.buffer.flush()?;
+    Ok(())
   }
 }
 
@@ -84,19 +100,29 @@ impl Canvas {
     }
   }
 
-  pub fn to_string(&self) -> String {
-    let mut output = PPM::new(self.width, self.height);
+  fn write_all<T: Write>(&self, buffer: &mut T) {
+    let mut output = PPM::new(self.width, self.height, buffer);
 
     for row in &self.pixels {
-      output.new_line();
+      output.new_line().unwrap();
       for (r, g, b) in row {
-        output.write(clamp_value(r));
-        output.write(clamp_value(g));
-        output.write(clamp_value(b));
+        output.write(clamp_value(r).as_bytes()).unwrap();
+        output.write(clamp_value(g).as_bytes()).unwrap();
+        output.write(clamp_value(b).as_bytes()).unwrap();
       }
     }
 
-    output.to_string()
+    output.end().unwrap();
+  }
+
+  pub fn to_string(&self) -> String {
+    let mut buffer = vec![0u8; 0];
+    self.write_all(&mut buffer);
+    String::from_utf8(buffer).unwrap()
+  }
+
+  pub fn to_writer<T: Write>(&self, writer: &mut T) {
+    self.write_all(writer);
   }
 
   #[cfg(test)]

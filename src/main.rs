@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::Write;
+use std::io::BufWriter;
 
 pub mod canvas;
 pub mod convert;
@@ -25,6 +25,8 @@ fn tick(env: &Environment, proj: Projectile) -> Projectile {
 }
 
 fn main() {
+    let file = fs::File::create("out.ppm").expect("failed to open file");
+    let mut writer = BufWriter::new(file);
     let mut canvas = Canvas::new(900, 500);
 
     let mut projectile = Projectile {
@@ -43,7 +45,5 @@ fn main() {
         canvas.write_pixel(x, y, Tuple::new_color(1, 0, 0));
     }
 
-    let mut file = fs::File::create("out.ppm").expect("failed to open file");
-    file.write_all(canvas.to_string().as_bytes())
-        .expect("failed to write to file");
+    canvas.to_writer(&mut writer);
 }
