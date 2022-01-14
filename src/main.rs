@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::BufWriter;
+use std::io::{BufWriter, Write};
 
 pub mod canvas;
 pub mod convert;
@@ -45,5 +45,8 @@ fn main() {
         canvas.write_pixel(x, y, Tuple::new_color(1, 0, 0));
     }
 
-    canvas.to_writer(&mut writer);
+    canvas
+        .write_out(&mut writer)
+        .expect("failed to write ppm to file");
+    writer.flush().expect("failed to flush buffer");
 }

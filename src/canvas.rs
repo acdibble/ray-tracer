@@ -3,39 +3,24 @@ use std::io::{self, Write};
 
 type Pixel = (f64, f64, f64);
 
-struct PPM<T: Write> {
-  buffer: T,
+struct PPM<'a, T: Write> {
+  buffer: &'a mut T,
   current_line_len: usize,
 }
 
-impl<T: Write> PPM<T> {
-  fn new(width: usize, height: usize, buffer: T) -> Self {
-    let mut out = Self {
+impl<'a, T: Write> PPM<'a, T> {
+  fn new(width: usize, height: usize, buffer: &'a mut T) -> Result<Self, io::Error> {
+    buffer.write(b"P3\n")?;
+    buffer.write(width.to_string().as_bytes())?;
+    buffer.write(b" ")?;
+    buffer.write(height.to_string().as_bytes())?;
+    buffer.write(b"\n")?;
+    buffer.write(b"255\n")?;
+
+    Ok(Self {
       buffer,
       current_line_len: 0,
-    };
-
-    out.write_header(width, height).unwrap();
-
-    out
-  }
-
-  fn write_header(&mut self, width: usize, height: usize) -> Result<(), io::Error> {
-    self.buffer.write(b"P3\n")?;
-    self.buffer.write(width.to_string().as_bytes())?;
-    self.buffer.write(b" ")?;
-    self.buffer.write(height.to_string().as_bytes())?;
-    self.buffer.write(b"\n")?;
-    self.buffer.write(b"255")?;
-    Ok(())
-  }
-
-  fn end(mut self) -> Result<(), io::Error> {
-    if self.current_line_len != 0 {
-      self.new_line()?;
-    }
-
-    Ok(())
+    })
   }
 
   fn new_line(&mut self) -> Result<(), io::Error> {
@@ -45,7 +30,7 @@ impl<T: Write> PPM<T> {
   }
 }
 
-impl<T: Write> Write for PPM<T> {
+impl<T: Write> Write for PPM<'_, T> {
   fn write(&mut self, value: &[u8]) -> Result<usize, io::Error> {
     if self.current_line_len + value.len() + 2 > 70 {
       self.new_line()?;
@@ -74,7 +59,7 @@ fn clamp_value(value: &f64) -> &'static str {
     return "255";
   }
 
-  u8_to_str((value * 255.).round() as u8)
+  u8_to_str((value * 255.0).round() as u8)
 }
 
 pub struct Canvas {
@@ -100,29 +85,31 @@ impl Canvas {
     }
   }
 
-  fn write_all<T: Write>(&self, buffer: &mut T) {
-    let mut output = PPM::new(self.width, self.height, buffer);
+  fn write_to_writer<T: Write>(&self, buffer: &mut T) -> Result<(), io::Error> {
+    let mut output = PPM::new(self.width, self.height, buffer)?;
 
     for row in &self.pixels {
-      output.new_line().unwrap();
       for (r, g, b) in row {
-        output.write(clamp_value(r).as_bytes()).unwrap();
-        output.write(clamp_value(g).as_bytes()).unwrap();
-        output.write(clamp_value(b).as_bytes()).unwrap();
+        output.write(clamp_value(r).as_bytes())?;
+        output.write(clamp_value(g).as_bytes())?;
+        output.write(clamp_value(b).as_bytes())?;
       }
+
+      output.new_line()?;
     }
 
-    output.end().unwrap();
+    Ok(())
   }
 
   pub fn to_string(&self) -> String {
-    let mut buffer = vec![0u8; 0];
-    self.write_all(&mut buffer);
+    let mut buffer = Vec::with_capacity((self.width + 1) * self.height * 3);
+    self.write_to_writer(&mut buffer).unwrap();
     String::from_utf8(buffer).unwrap()
   }
 
-  pub fn to_writer<T: Write>(&self, writer: &mut T) {
-    self.write_all(writer);
+  pub fn write_out<T: Write>(&self, writer: &mut T) -> Result<(), io::Error> {
+    self.write_to_writer(writer)?;
+    Ok(())
   }
 
   #[cfg(test)]
