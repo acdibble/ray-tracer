@@ -1,104 +1,79 @@
 use std::ops;
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
-enum Kind {
-  Vector,
-  Point,
-  Color,
-}
-
-impl ops::Add<Self> for Kind {
-  type Output = Self;
-
-  fn add(self, other: Self) -> Self::Output {
-    match (self, other) {
-      (Self::Vector, Self::Vector) => Self::Vector,
-      (Self::Vector, Self::Point) | (Self::Point, Self::Vector) => Self::Point,
-      (Self::Color, Self::Color) => Self::Color,
-      other => unreachable!("{:?}", other),
-    }
-  }
-}
-
-impl ops::Sub<Self> for Kind {
-  type Output = Self;
-
-  fn sub(self, other: Self) -> Self::Output {
-    match (self, other) {
-      (Self::Point, Self::Point) | (Self::Vector, Self::Vector) => Self::Vector,
-      (Self::Point, Self::Vector) => Self::Point,
-      (Self::Color, Self::Color) => Self::Color,
-      tuple => unreachable!("{:?}", tuple),
-    }
-  }
-}
-
 #[derive(Debug, Copy, Clone)]
-pub struct Tuple(pub f64, pub f64, pub f64, Kind);
+pub struct Tuple(pub f64, pub f64, pub f64, pub f64);
 
 impl Tuple {
-  fn new<X, Y, Z>(x: X, y: Y, z: Z, kind: Kind) -> Self
+  pub fn new<X, Y, Z, W>(x: X, y: Y, z: Z, w: W) -> Self
   where
-    X: std::convert::Into<f64>,
-    Y: std::convert::Into<f64>,
-    Z: std::convert::Into<f64>,
+    X: Into<f64>,
+    Y: Into<f64>,
+    Z: Into<f64>,
+    W: Into<f64>,
   {
-    Self(x.into(), y.into(), z.into(), kind)
+    Self(x.into(), y.into(), z.into(), w.into())
   }
 
   pub fn new_vector<X, Y, Z>(x: X, y: Y, z: Z) -> Self
   where
-    X: std::convert::Into<f64>,
-    Y: std::convert::Into<f64>,
-    Z: std::convert::Into<f64>,
+    X: Into<f64>,
+    Y: Into<f64>,
+    Z: Into<f64>,
   {
-    Self::new(x, y, z, Kind::Vector)
+    Self::new(x, y, z, 0.0)
   }
 
   pub fn new_point<X, Y, Z>(x: X, y: Y, z: Z) -> Self
   where
-    X: std::convert::Into<f64>,
-    Y: std::convert::Into<f64>,
-    Z: std::convert::Into<f64>,
+    X: Into<f64>,
+    Y: Into<f64>,
+    Z: Into<f64>,
   {
-    Self::new(x, y, z, Kind::Point)
+    Self::new(x, y, z, 1.0)
   }
 
   pub fn new_color<X, Y, Z>(x: X, y: Y, z: Z) -> Self
   where
-    X: std::convert::Into<f64>,
-    Y: std::convert::Into<f64>,
-    Z: std::convert::Into<f64>,
+    X: Into<f64>,
+    Y: Into<f64>,
+    Z: Into<f64>,
   {
-    Self::new(x, y, z, Kind::Color)
+    Self::new(x, y, z, 0.0)
+  }
+
+  pub fn from<T>([x, y, z, w]: [T; 4]) -> Self
+  where
+    T: Into<f64>,
+  {
+    Self::new(x, y, z, w)
   }
 
   pub fn as_color(self) -> (f64, f64, f64) {
     let Tuple(r, g, b, kind) = self;
 
-    assert_eq!(kind, Kind::Color);
+    assert_eq!(kind, 0.0);
 
     (r, g, b)
   }
 
-  const fn is_vector(&self) -> bool {
-    matches!(self.3, Kind::Vector)
+  fn is_vector(&self) -> bool {
+    self.3 == 0.0
   }
 
-  const fn is_point(&self) -> bool {
-    matches!(self.3, Kind::Point)
+  fn is_point(&self) -> bool {
+    self.3 == 1.0
   }
 
   pub fn magnitude(self) -> f64 {
-    let Tuple(x, y, z, kind) = self;
+    let Tuple(x, y, z, w) = self;
 
-    (x.powf(2.0) + y.powf(2.0) + z.powf(2.0)).sqrt()
+    (x.powf(2.0) + y.powf(2.0) + z.powf(2.0) + w.powf(2.0)).sqrt()
   }
 
   pub fn normalize(self) -> Self {
     let Tuple(x, y, z, kind) = self;
 
-    assert_eq!(kind, Kind::Vector);
+    assert_eq!(kind, 0.0);
 
     let magnitude = self.magnitude();
 
@@ -107,24 +82,24 @@ impl Tuple {
 
   pub fn dot_product(self, Tuple(x2, y2, z2, kind2): Self) -> f64 {
     let Tuple(x1, y1, z1, kind1) = self;
-    assert_eq!(kind1, Kind::Vector);
-    assert_eq!(kind2, Kind::Vector);
+    assert_eq!(kind1, 0.0);
+    assert_eq!(kind2, 0.0);
 
     x1 * x2 + y1 * y2 + z1 * z2
   }
 
   pub fn cross_product(self, Tuple(x2, y2, z2, kind1): Self) -> Self {
     let Tuple(x1, y1, z1, kind2) = self;
-    assert_eq!(kind1, Kind::Vector);
-    assert_eq!(kind2, Kind::Vector);
+    assert_eq!(kind1, 0.0);
+    assert_eq!(kind2, 0.0);
 
     Tuple::new_vector(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
   }
 
   pub fn hadamard_product(self, Tuple(r2, g2, b2, kind1): Self) -> Self {
     let Tuple(r1, g1, b1, kind2) = self;
-    assert_eq!(kind1, Kind::Color);
-    assert_eq!(kind2, Kind::Color);
+    assert_eq!(kind1, 0.0);
+    assert_eq!(kind2, 0.0);
 
     Tuple::new_color(r1 * r2, g1 * g2, b1 * b2)
   }
@@ -205,7 +180,7 @@ mod test {
     assert_eq!(4.3, point.0);
     assert_eq!(-4.2, point.1);
     assert_eq!(3.1, point.2);
-    assert_eq!(Kind::Point, point.3);
+    assert_eq!(1.0, point.3);
     assert!(point.is_point());
     assert!(!point.is_vector());
   }
@@ -216,7 +191,7 @@ mod test {
     assert_eq!(4.3, point.0);
     assert_eq!(-4.2, point.1);
     assert_eq!(3.1, point.2);
-    assert_eq!(Kind::Vector, point.3);
+    assert_eq!(0.0, point.3);
     assert!(!point.is_point());
     assert!(point.is_vector())
   }
@@ -318,7 +293,7 @@ mod test {
     assert_eq!(-0.5, c.0);
     assert_eq!(0.4, c.1);
     assert_eq!(1.7, c.2);
-    assert_eq!(Kind::Color, c.3);
+    assert_eq!(0.0, c.3);
   }
 
   #[test]

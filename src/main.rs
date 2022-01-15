@@ -3,6 +3,7 @@ use std::io::{BufWriter, Write};
 
 pub mod canvas;
 pub mod convert;
+pub mod matrices;
 pub mod tuples;
 
 use canvas::Canvas;
