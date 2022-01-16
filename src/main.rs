@@ -4,6 +4,7 @@ use std::io::{BufWriter, Write};
 pub mod canvas;
 pub mod convert;
 pub mod matrices;
+#[macro_use]
 pub mod tuples;
 
 use canvas::Canvas;
@@ -31,19 +32,19 @@ fn main() {
     let mut canvas = Canvas::new(900, 500);
 
     let mut projectile = Projectile {
-        position: Tuple::new_point(0, 1, 0),
-        velocity: Tuple::new_vector(1, 1.8, 0).normalize() * 11.25,
+        position: point!(0, 1, 0),
+        velocity: vector!(1, 1.8, 0).normalize() * 11.25,
     };
     let env = Environment {
-        gravity: Tuple::new_vector(0, -0.1, 0),
-        wind: Tuple::new_vector(-0.01, 0, 0),
+        gravity: vector!(0, -0.1, 0),
+        wind: vector!(-0.01, 0, 0),
     };
 
     while projectile.position.1 > 0.0 {
         projectile = tick(&env, projectile);
         let x = projectile.position.0.round() as usize;
         let y = canvas.height - (projectile.position.1.round() as usize);
-        canvas.write_pixel(x, y, Tuple::new_color(1, 0, 0));
+        canvas.write_pixel(x, y, color!(1, 0, 0));
     }
 
     canvas

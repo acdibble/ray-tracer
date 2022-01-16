@@ -121,7 +121,6 @@ impl Canvas {
 #[cfg(test)]
 mod test {
   use super::*;
-  use crate::tuples::Tuple;
 
   #[test]
   fn test_ppm_header() {
@@ -137,9 +136,9 @@ mod test {
   #[test]
   fn test_ppm_pixel_data() {
     let mut canvas = Canvas::new(5, 3);
-    let c1 = Tuple::new_color(1.5, 0, 0);
-    let c2 = Tuple::new_color(0, 0.5, 0);
-    let c3 = Tuple::new_color(-0.5, 0, 1);
+    let c1 = color!(1.5, 0, 0);
+    let c2 = color!(0, 0.5, 0);
+    let c3 = color!(-0.5, 0, 1);
 
     canvas.write_pixel(0, 0, c1);
     canvas.write_pixel(2, 1, c2);
@@ -157,7 +156,7 @@ mod test {
   fn test_ppm_line_length() {
     let mut canvas = Canvas::new(10, 2);
 
-    let color = Tuple::new_color(1, 0.8, 0.6).as_color();
+    let color = color!(1, 0.8, 0.6).as_color();
     for row in canvas.iter_mut() {
       for pixel in row.iter_mut() {
         *pixel = color;

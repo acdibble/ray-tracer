@@ -3,48 +3,39 @@ use std::ops;
 #[derive(Debug, Copy, Clone)]
 pub struct Tuple(pub f64, pub f64, pub f64, pub f64);
 
+#[macro_export]
+macro_rules! point {
+  ($x:expr , $y:expr , $z:expr) => {
+    Tuple::new($x as f64, $y as f64, $z as f64, 1.0)
+  };
+}
+
+pub(crate) use point;
+
+#[macro_export]
+macro_rules! vector {
+  ($x:expr , $y:expr , $z:expr) => {
+    Tuple::new($x as f64, $y as f64, $z as f64, 0.0)
+  };
+}
+
+pub(crate) use vector;
+
+#[macro_export]
+macro_rules! color {
+  ($x:expr , $y:expr , $z:expr) => {
+    Tuple::new($x as f64, $y as f64, $z as f64, 0.0)
+  };
+}
+
+pub(crate) use color;
+
 impl Tuple {
-  pub fn new<X, Y, Z, W>(x: X, y: Y, z: Z, w: W) -> Self
-  where
-    X: Into<f64>,
-    Y: Into<f64>,
-    Z: Into<f64>,
-    W: Into<f64>,
-  {
-    Self(x.into(), y.into(), z.into(), w.into())
+  pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+    Self(x, y, z, w)
   }
 
-  pub fn new_vector<X, Y, Z>(x: X, y: Y, z: Z) -> Self
-  where
-    X: Into<f64>,
-    Y: Into<f64>,
-    Z: Into<f64>,
-  {
-    Self::new(x, y, z, 0.0)
-  }
-
-  pub fn new_point<X, Y, Z>(x: X, y: Y, z: Z) -> Self
-  where
-    X: Into<f64>,
-    Y: Into<f64>,
-    Z: Into<f64>,
-  {
-    Self::new(x, y, z, 1.0)
-  }
-
-  pub fn new_color<X, Y, Z>(x: X, y: Y, z: Z) -> Self
-  where
-    X: Into<f64>,
-    Y: Into<f64>,
-    Z: Into<f64>,
-  {
-    Self::new(x, y, z, 0.0)
-  }
-
-  pub fn from<T>([x, y, z, w]: [T; 4]) -> Self
-  where
-    T: Into<f64>,
-  {
+  pub fn from([x, y, z, w]: [f64; 4]) -> Self {
     Self::new(x, y, z, w)
   }
 
@@ -77,7 +68,7 @@ impl Tuple {
 
     let magnitude = self.magnitude();
 
-    Tuple::new_vector(x / magnitude, y / magnitude, z / magnitude)
+    vector!(x / magnitude, y / magnitude, z / magnitude)
   }
 
   pub fn dot_product(self, Tuple(x2, y2, z2, kind2): Self) -> f64 {
@@ -93,7 +84,7 @@ impl Tuple {
     assert_eq!(kind1, 0.0);
     assert_eq!(kind2, 0.0);
 
-    Tuple::new_vector(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
+    vector!(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
   }
 
   pub fn hadamard_product(self, Tuple(r2, g2, b2, kind1): Self) -> Self {
@@ -101,7 +92,7 @@ impl Tuple {
     assert_eq!(kind1, 0.0);
     assert_eq!(kind2, 0.0);
 
-    Tuple::new_color(r1 * r2, g1 * g2, b1 * b2)
+    color!(r1 * r2, g1 * g2, b1 * b2)
   }
 }
 
@@ -176,7 +167,7 @@ mod test {
 
   #[test]
   fn test_point() {
-    let point = Tuple::new_point(4.3, -4.2, 3.1);
+    let point = point!(4.3, -4.2, 3.1);
     assert_eq!(4.3, point.0);
     assert_eq!(-4.2, point.1);
     assert_eq!(3.1, point.2);
@@ -187,7 +178,7 @@ mod test {
 
   #[test]
   fn test_vector() {
-    let point = Tuple::new_vector(4.3, -4.2, 3.1);
+    let point = vector!(4.3, -4.2, 3.1);
     assert_eq!(4.3, point.0);
     assert_eq!(-4.2, point.1);
     assert_eq!(3.1, point.2);
@@ -198,98 +189,83 @@ mod test {
 
   #[test]
   fn test_add() {
-    let a1 = Tuple::new_vector(3, -2, 5);
-    let a2 = Tuple::new_vector(-2, 3, 1);
+    let a1 = vector!(3.0, -2.0, 5.0);
+    let a2 = vector!(-2.0, 3.0, 1.0);
 
-    assert_eq!(Tuple::new_vector(1, 1, 6), a1 + a2);
+    assert_eq!(vector!(1.0, 1.0, 6.0), a1 + a2);
   }
 
   #[test]
   fn test_sub() {
-    let p1 = Tuple::new_point(3, 2, 1);
-    let p2 = Tuple::new_point(5, 6, 7);
+    let p1 = point!(3.0, 2.0, 1.0);
+    let p2 = point!(5.0, 6.0, 7.0);
 
-    assert_eq!(Tuple::new_vector(-2, -4, -6), p1 - p2);
+    assert_eq!(vector!(-2.0, -4.0, -6.0), p1 - p2);
 
-    let p = Tuple::new_point(3, 2, 1);
-    let v = Tuple::new_vector(5, 6, 7);
-    assert_eq!(Tuple::new_point(-2, -4, -6), p - v);
+    let p = point!(3, 2, 1);
+    let v = vector!(5, 6, 7);
+    assert_eq!(point!(-2, -4, -6), p - v);
 
-    let v1 = Tuple::new_vector(3, 2, 1);
-    let v2 = Tuple::new_vector(5, 6, 7);
-    assert_eq!(Tuple::new_vector(-2, -4, -6), v1 - v2);
+    let v1 = vector!(3, 2, 1);
+    let v2 = vector!(5, 6, 7);
+    assert_eq!(vector!(-2, -4, -6), v1 - v2);
   }
 
   #[test]
   fn test_neg() {
-    assert_eq!(Tuple::new_vector(-1, 2, -3), -Tuple::new_vector(1, -2, 3))
+    assert_eq!(vector!(-1, 2, -3), -vector!(1, -2, 3))
   }
 
   #[test]
   fn test_mul() {
-    assert_eq!(
-      Tuple::new_vector(3.5, -7, 10.5),
-      Tuple::new_vector(1, -2, 3) * 3.5
-    );
-    assert_eq!(
-      Tuple::new_vector(0.5, -1, 1.5),
-      Tuple::new_vector(1, -2, 3) * 0.5
-    );
+    assert_eq!(vector!(3.5, -7, 10.5), vector!(1, -2, 3) * 3.5);
+    assert_eq!(vector!(0.5, -1, 1.5), vector!(1, -2, 3) * 0.5);
   }
 
   #[test]
   fn test_div() {
-    assert_eq!(
-      Tuple::new_vector(0.5, -1, 1.5),
-      Tuple::new_vector(1, -2, 3) / 2.
-    );
+    assert_eq!(vector!(0.5, -1, 1.5), vector!(1, -2, 3) / 2.);
   }
 
   #[test]
   fn test_magnitude() {
-    assert_eq!(1.0, Tuple::new_vector(1, 0, 0).magnitude());
-    assert_eq!(1.0, Tuple::new_vector(0, 1, 0).magnitude());
-    assert_eq!(1.0, Tuple::new_vector(0, 0, 1).magnitude());
-    assert_eq!(14f64.sqrt(), Tuple::new_vector(1, 2, 3).magnitude());
-    assert_eq!(14f64.sqrt(), Tuple::new_vector(-1, -2, -3).magnitude());
+    assert_eq!(1.0, vector!(1, 0, 0).magnitude());
+    assert_eq!(1.0, vector!(0, 1, 0).magnitude());
+    assert_eq!(1.0, vector!(0, 0, 1).magnitude());
+    assert_eq!(14f64.sqrt(), vector!(1, 2, 3).magnitude());
+    assert_eq!(14f64.sqrt(), vector!(-1, -2, -3).magnitude());
   }
 
   #[test]
   fn test_normalize() {
+    assert_eq!(vector!(1, 0, 0), vector!(4, 0, 0).normalize());
     assert_eq!(
-      Tuple::new_vector(1, 0, 0),
-      Tuple::new_vector(4, 0, 0).normalize()
+      vector!(0.26726, 0.53452, 0.80178),
+      vector!(1, 2, 3).normalize()
     );
-    assert_eq!(
-      Tuple::new_vector(0.26726, 0.53452, 0.80178),
-      Tuple::new_vector(1, 2, 3).normalize()
-    );
-    assert_eq!(1.0, Tuple::new_vector(1, 2, 3).normalize().magnitude());
+    assert_eq!(1.0, vector!(1, 2, 3).normalize().magnitude());
   }
 
   #[test]
   fn test_dot_product() {
-    assert_eq!(
-      20.0,
-      Tuple::new_vector(1, 2, 3).dot_product(Tuple::new_vector(2, 3, 4))
-    );
+    assert_eq!(20.0, vector!(1, 2, 3).dot_product(vector!(2, 3, 4)));
   }
 
   #[test]
   fn test_cross_product() {
     assert_eq!(
-      Tuple::new_vector(-1, 2, -1),
-      Tuple::new_vector(1, 2, 3).cross_product(Tuple::new_vector(2, 3, 4))
+      vector!(-1, 2, -1),
+      vector!(1, 2, 3).cross_product(vector!(2, 3, 4))
     );
     assert_eq!(
-      Tuple::new_vector(1, -2, 1),
-      Tuple::new_vector(2, 3, 4).cross_product(Tuple::new_vector(1, 2, 3))
+      vector!(1, -2, 1),
+      vector!(2, 3, 4).cross_product(vector!(1, 2, 3))
     );
   }
 
   #[test]
   fn test_color_constructor() {
-    let c = Tuple::new_color(-0.5, 0.4, 1.7);
+    let c = color!(-0.5, 0.4, 1.7);
     assert_eq!(-0.5, c.0);
     assert_eq!(0.4, c.1);
     assert_eq!(1.7, c.2);
@@ -298,8 +274,8 @@ mod test {
 
   #[test]
   fn test_hadamard_product() {
-    let c1 = Tuple::new_color(1, 0.2, 0.4);
-    let c2 = Tuple::new_color(0.9, 1, 0.1);
-    assert_eq!(Tuple::new_color(0.9, 0.2, 0.04), c1.hadamard_product(c2));
+    let c1 = color!(1, 0.2, 0.4);
+    let c2 = color!(0.9, 1, 0.1);
+    assert_eq!(color!(0.9, 0.2, 0.04), c1.hadamard_product(c2));
   }
 }

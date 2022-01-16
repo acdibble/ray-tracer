@@ -1,4 +1,4 @@
-use crate::tuples::Tuple;
+use crate::tuples::*;
 use std::fmt::Debug;
 use std::ops;
 
@@ -131,7 +131,7 @@ macro_rules! define_methods {
         (0..$size).fold(0.0, |acc, col| acc + self.cofactor(0, col) * self.0[0][col])
       }
 
-      fn inverse(&self) -> Option<Self> {
+      pub fn inverse(&self) -> Option<Self> {
         let determinant = self.determinant();
 
         if determinant == 0.0 {
@@ -252,9 +252,9 @@ mod test {
       [8.0, 6.0, 4.0, 1.0],
       [0.0, 0.0, 0.0, 1.0],
     ]);
-    let tuple = Tuple::new_point(1, 2, 3);
+    let tuple = point!(1, 2, 3);
 
-    assert_eq!(Tuple::new_point(18, 24, 33), matrix * tuple)
+    assert_eq!(point!(18, 24, 33), matrix * tuple)
   }
 
   #[test]
@@ -275,7 +275,7 @@ mod test {
 
     assert_eq!(matrix.clone(), matrix * Matrix::new(identity));
 
-    let tuple = Tuple::new(1, 2, 3, 4);
+    let tuple = Tuple::new(1.0, 2.0, 3.0, 4.0);
 
     assert_eq!(tuple, Matrix::new(identity) * tuple);
   }
