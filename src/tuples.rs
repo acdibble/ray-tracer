@@ -1,3 +1,4 @@
+use crate::transformations::*;
 use std::ops;
 
 #[derive(Debug, Copy, Clone)]
@@ -93,6 +94,38 @@ impl Tuple {
     assert_eq!(kind2, 0.0);
 
     color!(r1 * r2, g1 * g2, b1 * b2)
+  }
+
+  pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+    translation(x, y, z) * self
+  }
+
+  pub fn rotate_x(self, radians: f64) -> Self {
+    rotation(Axis::X, radians) * self
+  }
+
+  pub fn rotate_y(self, radians: f64) -> Self {
+    rotation(Axis::Y, radians) * self
+  }
+
+  pub fn rotate_z(self, radians: f64) -> Self {
+    rotation(Axis::Z, radians) * self
+  }
+
+  pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+    scaling(x, y, z) * self
+  }
+
+  pub fn shear(
+    self,
+    x_to_y: f64,
+    x_to_z: f64,
+    y_to_x: f64,
+    y_to_z: f64,
+    z_to_y: f64,
+    z_to_x: f64,
+  ) -> Self {
+    shearing(x_to_y, x_to_z, y_to_x, y_to_z, z_to_y, z_to_x) * self
   }
 }
 

@@ -1,50 +1,36 @@
+use std::f64::consts::PI;
 use std::fs;
 use std::io::{BufWriter, Write};
 
 pub mod canvas;
 pub mod convert;
 pub mod matrices;
+pub mod transformations;
 #[macro_use]
 pub mod tuples;
 
 use canvas::Canvas;
 use tuples::Tuple;
 
-#[derive(Debug)]
-struct Projectile {
-    position: Tuple,
-    velocity: Tuple,
-}
-struct Environment {
-    gravity: Tuple,
-    wind: Tuple,
-}
-
-fn tick(env: &Environment, proj: Projectile) -> Projectile {
-    let position = proj.position + proj.velocity;
-    let velocity = proj.velocity + env.gravity + env.wind;
-    Projectile { position, velocity }
-}
-
 fn main() {
     let file = fs::File::create("out.ppm").expect("failed to open file");
     let mut writer = BufWriter::new(file);
-    let mut canvas = Canvas::new(900, 500);
+    let mut canvas = Canvas::new(500, 500);
 
-    let mut projectile = Projectile {
-        position: point!(0, 1, 0),
-        velocity: vector!(1, 1.8, 0).normalize() * 11.25,
-    };
-    let env = Environment {
-        gravity: vector!(0, -0.1, 0),
-        wind: vector!(-0.01, 0, 0),
-    };
+    let twelve = point!(0, 1, 0);
+    let white = color!(255, 255, 255);
 
-    while projectile.position.1 > 0.0 {
-        projectile = tick(&env, projectile);
-        let x = projectile.position.0.round() as usize;
-        let y = canvas.height - (projectile.position.1.round() as usize);
-        canvas.write_pixel(x, y, color!(1, 0, 0));
+    for i in 0..12 {
+        let current_index = twelve
+            .rotate_z(-i as f64 * PI / 6.0)
+            .scale(200.0, 200.0, 0.0)
+            .translate(250.0, 250.0, 0.0);
+
+        canvas.write_pixel(
+            current_index.0.round() as usize,
+            current_index.1.round() as usize,
+            white,
+        );
     }
 
     canvas

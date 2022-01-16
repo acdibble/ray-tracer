@@ -1,3 +1,4 @@
+use crate::transformations::*;
 use crate::tuples::*;
 use std::fmt::Debug;
 use std::ops;
@@ -82,6 +83,49 @@ impl Matrix<2> {
     let Matrix([[a, b], [c, d]]) = self;
 
     a * d - b * c
+  }
+}
+
+impl Matrix<4> {
+  pub fn identity() -> Self {
+    Matrix::new([
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ])
+  }
+
+  pub fn rotate_x(self, radians: f64) -> Self {
+    self * rotation(Axis::X, radians)
+  }
+
+  pub fn rotate_y(self, radians: f64) -> Self {
+    self * rotation(Axis::Y, radians)
+  }
+
+  pub fn rotate_z(self, radians: f64) -> Self {
+    self * rotation(Axis::Z, radians)
+  }
+
+  pub fn scale(self, x: f64, y: f64, z: f64) -> Self {
+    self * scaling(x, y, z)
+  }
+
+  pub fn translate(self, x: f64, y: f64, z: f64) -> Self {
+    self * translation(x, y, z)
+  }
+
+  pub fn shear(
+    self,
+    x_to_y: f64,
+    x_to_z: f64,
+    y_to_x: f64,
+    y_to_z: f64,
+    z_to_y: f64,
+    z_to_x: f64,
+  ) -> Self {
+    self * shearing(x_to_y, x_to_z, y_to_x, y_to_z, z_to_y, z_to_x)
   }
 }
 
