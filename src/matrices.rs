@@ -1,5 +1,4 @@
-use crate::transformations::*;
-use crate::tuples::*;
+use crate::{constants::EPSILON, transformations::*, tuples::*};
 use std::fmt::Debug;
 use std::ops;
 
@@ -64,8 +63,6 @@ impl ops::Mul<Tuple> for Matrix<4> {
 
 impl<const N: usize> PartialEq for Matrix<N> {
   fn eq(&self, other: &Self) -> bool {
-    const EPSILON: f64 = 0.00001;
-
     for (row_a, row_b) in self.0.iter().zip(other.0.iter()) {
       for (a, b) in row_a.iter().zip(row_b.iter()) {
         if (a - b).abs() > EPSILON {
@@ -87,7 +84,7 @@ impl Matrix<2> {
 }
 
 impl Matrix<4> {
-  pub fn identity() -> Self {
+  pub const fn identity() -> Self {
     Matrix::new([
       [1.0, 0.0, 0.0, 0.0],
       [0.0, 1.0, 0.0, 0.0],

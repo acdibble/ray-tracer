@@ -1,4 +1,4 @@
-use crate::transformations::*;
+use crate::{constants::EPSILON, transformations::*};
 use std::ops;
 
 #[derive(Debug, Copy, Clone)]
@@ -32,11 +32,11 @@ macro_rules! color {
 pub(crate) use color;
 
 impl Tuple {
-  pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+  pub const fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
     Self(x, y, z, w)
   }
 
-  pub fn from([x, y, z, w]: [f64; 4]) -> Self {
+  pub const fn from([x, y, z, w]: [f64; 4]) -> Self {
     Self::new(x, y, z, w)
   }
 
@@ -151,8 +151,6 @@ impl ops::Sub<Self> for Tuple {
 
 impl PartialEq for Tuple {
   fn eq(&self, Tuple(x2, y2, z2, kind2): &Self) -> bool {
-    const EPSILON: f64 = 0.00001;
-
     let Tuple(x1, y1, z1, kind1) = self;
 
     ((x1 - x2).abs() < EPSILON)

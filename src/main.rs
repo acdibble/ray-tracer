@@ -1,36 +1,56 @@
-use std::f64::consts::PI;
-use std::fs;
-use std::io::{BufWriter, Write};
+use std::{
+    fs,
+    io::{BufWriter, Write},
+};
 
 pub mod canvas;
+pub mod constants;
 pub mod convert;
+pub mod intersections;
 pub mod matrices;
+pub mod rays;
+pub mod spheres;
 pub mod transformations;
 #[macro_use]
 pub mod tuples;
 
 use canvas::Canvas;
+use rays::Ray;
+use spheres::Sphere;
 use tuples::Tuple;
 
 fn main() {
     let file = fs::File::create("out.ppm").expect("failed to open file");
     let mut writer = BufWriter::new(file);
-    let mut canvas = Canvas::new(500, 500);
 
-    let twelve = point!(0, 1, 0);
-    let white = color!(255, 255, 255);
+    let canvas_pixels = 500;
+    let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
 
-    for i in 0..12 {
-        let current_index = twelve
-            .rotate_z(-i as f64 * PI / 6.0)
-            .scale(200.0, 200.0, 0.0)
-            .translate(250.0, 250.0, 0.0);
+    let ray_origin = point!(0, 0, -5.0);
+    let wall_z = 10.0;
+    let wall_size = 7.0;
 
-        canvas.write_pixel(
-            current_index.0.round() as usize,
-            current_index.1.round() as usize,
-            white,
-        );
+    let pixel_size = wall_size / canvas_pixels as f64;
+    let half = wall_size / 2.0;
+
+    let sphere = Sphere::new();
+    let red = color!(1, 0, 0);
+
+    for y in 0..canvas_pixels {
+        let world_y = half - pixel_size * y as f64;
+
+        for x in 0..canvas_pixels {
+            let world_x = -half + pixel_size * x as f64;
+
+            let position = point!(world_x, world_y, wall_z);
+
+            let ray = Ray::new(ray_origin, (position - ray_origin).normalize());
+            let intersections = sphere.intersect(&ray);
+
+            if intersections.hit().is_some() {
+                canvas.write_pixel(x, y, red);
+            }
+        }
     }
 
     canvas
