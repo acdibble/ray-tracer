@@ -1,10 +1,14 @@
-use crate::{constants::EPSILON, intersections::*, matrices::*, rays::*, tuples::*};
+use crate::{
+    constants::EPSILON, intersections::Intersections, materials::Material, matrices::Matrix,
+    rays::Ray, tuples::*,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Sphere {
     origin: Tuple,
     radius: f64,
     transform: Matrix<4>,
+    pub material: Material,
 }
 
 impl PartialEq for Sphere {
@@ -19,6 +23,7 @@ impl Sphere {
             origin: Tuple::new(0.0, 0.0, 0.0, 1.0),
             radius: 1.0,
             transform: Matrix::<4>::identity(),
+            material: Material::new(),
         }
     }
 
@@ -53,12 +58,23 @@ impl Sphere {
     pub fn set_transform(&mut self, transform: Matrix<4>) {
         self.transform = transform;
     }
+
+    pub fn normal_at(&self, point: &Tuple) -> Tuple {
+        let inverse_transform = self.transform.inverse().unwrap();
+        let object_point = inverse_transform * *point;
+        let object_normal = object_point - self.origin;
+        let mut world_normal = inverse_transform.transpose() * object_normal;
+        world_normal.3 = 0.0;
+        world_normal.normalize()
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::intersections::Intersection;
     use crate::transformations::*;
+    use std::f64::consts::PI;
 
     #[test]
     fn test_intersect() {
@@ -123,5 +139,34 @@ mod test {
 
         sphere.set_transform(translation(2.0, 3.0, 4.0));
         assert_eq!(translation(2.0, 3.0, 4.0), sphere.transform);
+    }
+
+    #[test]
+    fn test_normal_at() {
+        let mut sphere = Sphere::new();
+
+        assert_eq!(vector!(1, 0, 0), sphere.normal_at(&point!(1, 0, 0)));
+        assert_eq!(vector!(0, 1, 0), sphere.normal_at(&point!(0, 1, 0)));
+        assert_eq!(vector!(0, 0, 1), sphere.normal_at(&point!(0, 0, 1)));
+        assert_eq!(
+            vector!(3f64.sqrt() / 3.0, 3f64.sqrt() / 3.0, 3f64.sqrt() / 3.0),
+            sphere.normal_at(&point!(
+                3f64.sqrt() / 3.0,
+                3f64.sqrt() / 3.0,
+                3f64.sqrt() / 3.0
+            ))
+        );
+
+        sphere.set_transform(translation(0.0, 1.0, 0.0));
+        assert_eq!(
+            vector!(0, 0.70711, -0.70711),
+            sphere.normal_at(&point!(0, 1.70711, -0.70711))
+        );
+
+        sphere.set_transform(scaling(1.0, 0.5, 1.0) * rotation(Axis::Z, PI / 5.0));
+        assert_eq!(
+            vector!(0, 0.97014, -0.24254),
+            sphere.normal_at(&point!(0, 2f64.sqrt() / 2.0, -2f64.sqrt() / 2.0))
+        );
     }
 }

@@ -2,8 +2,8 @@ use crate::{constants::EPSILON, spheres::*};
 
 #[derive(Debug)]
 pub struct Intersection {
-    t: f64,
-    object: Sphere,
+    pub t: f64,
+    pub object: Sphere,
 }
 
 impl Intersection {

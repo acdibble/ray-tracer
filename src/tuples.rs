@@ -127,6 +127,10 @@ impl Tuple {
   ) -> Self {
     shearing(x_to_y, x_to_z, y_to_x, y_to_z, z_to_y, z_to_x) * self
   }
+
+  pub fn reflect(&self, normal: Self) -> Self {
+    *self - normal * 2.0 * self.dot_product(normal)
+  }
 }
 
 impl ops::Add<Self> for Tuple {
@@ -308,5 +312,16 @@ mod test {
     let c1 = color!(1, 0.2, 0.4);
     let c2 = color!(0.9, 1, 0.1);
     assert_eq!(color!(0.9, 0.2, 0.04), c1.hadamard_product(c2));
+  }
+
+  #[test]
+  fn test_reflect() {
+    let vector = vector!(1, -1, 0);
+    let normal = vector!(0, 1, 0);
+    assert_eq!(vector!(1, 1, 0), vector.reflect(normal));
+
+    let vector = vector!(0, -1, 0);
+    let normal = vector!(2f64.sqrt() / 2.0, 2f64.sqrt() / 2.0, 0);
+    assert_eq!(vector!(1, 0, 0), vector.reflect(normal));
   }
 }

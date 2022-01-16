@@ -10,7 +10,7 @@ impl<const N: usize> Matrix<N> {
     Self(input)
   }
 
-  fn transpose(&self) -> Self {
+  pub fn transpose(&self) -> Self {
     let mut output = [[0.0f64; N]; N];
 
     for (i, row) in self.0.iter().enumerate() {

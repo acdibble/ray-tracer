@@ -77,7 +77,7 @@ impl Canvas {
     }
   }
 
-  pub fn write_pixel(&mut self, x: usize, y: usize, tuple: Tuple) {
+  pub fn write_pixel(&mut self, x: usize, y: usize, tuple: &Tuple) {
     if let Some(row) = self.pixels.get_mut(y) {
       if let Some(pixel) = row.get_mut(x) {
         *pixel = tuple.as_color();
@@ -140,9 +140,9 @@ mod test {
     let c2 = color!(0, 0.5, 0);
     let c3 = color!(-0.5, 0, 1);
 
-    canvas.write_pixel(0, 0, c1);
-    canvas.write_pixel(2, 1, c2);
-    canvas.write_pixel(4, 2, c3);
+    canvas.write_pixel(0, 0, &c1);
+    canvas.write_pixel(2, 1, &c2);
+    canvas.write_pixel(4, 2, &c3);
 
     let string = canvas.to_string();
     let mut lines = string.lines().skip(3);
